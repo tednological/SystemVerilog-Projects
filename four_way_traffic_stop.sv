@@ -1,7 +1,3 @@
-// Inputs: clk, reset, car_north, car_south, car_east, car_west
-// outputs: light_north, light_south, light_east, light_west
-// left_north, left_south, left_east, left_west
-
 // Anyone who has spent any amount of time in the wonderful city of Las Vegas has encountered one of these, a 4-way traffic stop. 
 // This is the top level module for representing one of these glorious feats of engineering. 
 module four_way_traffic_stop(
