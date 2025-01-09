@@ -2,6 +2,14 @@ module traffic_light(
     input logic clk, reset, start,
     output logic [1:0] light_color
 );
+    // Define the number of clk cycles for each light
+    parameter integer GREEN_TIME = 5;
+    parameter integer YELLOW_TIME =2;
+    parameter integer RED_TIME = 4;
+
+    // counter to hold the time spent in a given state
+    integer counter;
+
     // The light can be in one of three states, green/yellow/red
     typedef enum logic [1:0]{
         S_GREEN = 2'b00,
@@ -11,26 +19,7 @@ module traffic_light(
 
     state_t current_state, next_state; 
 
-    // Define the number of clk cycles for each light
-    parameter integer GREEN_TIME = 5;
-    parameter integer YELLOW_TIME =2;
-    parameter integer RED_TIME = 4;
-
-    // counter to hold the time spent in a given state
-    integer counter;
-
-    // Update current_state and counter on each clk cycle
-    always_ff @(posedge clk or posedge reset) begin
-        if (reset) begin
-            current_state <= S_RED;
-            counter <= RED_TIME;
-        end else if (start) begin
-            current_state <= next_state;
-
-            if (counter > 0)
-                counter <= counter - 1;
-        end
-    end
+    
 
     // The next-state logic for the light
     always_comb begin 
@@ -38,7 +27,7 @@ module traffic_light(
 
         case(current_state)
             S_GREEN: begin 
-                if(counter ==0) begin
+                if(counter == 0) begin
                     next_state = S_YELLOW;
                 end
             end
@@ -60,7 +49,8 @@ module traffic_light(
     // The following code "reloads" the counter, essentially reseting its value each time we change states
     always_ff @(posedge clk or posedge reset) begin
         if (reset) begin
-            counter <= GREEN_TIME;
+            counter <= RED_TIME;
+            current_state <= S_RED;
         end
         else begin
             if (current_state != next_state) begin
@@ -70,6 +60,12 @@ module traffic_light(
                     S_RED: counter <= RED_TIME;
                     default: counter <= GREEN_TIME;
                 endcase
+            end
+            if (start) begin
+            current_state <= next_state;
+
+            if (counter > 0)
+                counter <= counter - 1;
             end
         end
     end
