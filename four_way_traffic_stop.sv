@@ -1,28 +1,34 @@
 // Inputs: clk, reset, car_north, car_south, car_east, car_west
 // outputs: light_north, light_south, light_east, light_west
 // left_north, left_south, left_east, left_west
+
+// Anyone who has spent any amount of time in the wonderful city of Las Vegas has encountered one of these, a 4-way traffic stop. 
+// This is the top level module for representing one of these glorious feats of engineering. 
 module four_way_traffic_stop(
     input logic clk, reset, car_north, car_south, car_east, car_west,
     input logic car_north_left, car_south_left, car_east_left, car_west_left,
     output logic [1:0] light_north, light_south, light_east, light_west,
     output logic [1:0] left_north, left_south, left_east, left_west
 );
+    // The time from the moment it turns green to the moment it will turn green again is 11 cycles
+    parameter integer FULL_TIME = 11;
+
+    // counter to hold the time
+    integer counter;
     // 00 is Green, 01 is yellow, 10 is red, 11 is flashing yellow
     logic N_start_cmd, E_start_cmd, S_start_cmd, W_start_cmd;
     logic NL_start_cmd, EL_start_cmd, SL_start_cmd, WL_start_cmd;
     logic NL_flash, EL_flash, SL_flash, WL_flash;
-    logic [1:0] N_light, S_light, E_light, W_light;
-    logic [1:0] N_left, S_left, E_left, W_left;
     // We initialize traffic lights, using X_start_cmd to start them
-    traffic_light T_NORTH(clk, reset, N_start_cmd, N_light);
-    traffic_light T_EAST(clk, reset, E_start_cmd,  E_light);
-    traffic_light T_SOUTH(clk, reset, S_start_cmd, S_light);
-    traffic_light T_WEST(clk, reset, W_start_cmd,W_light);
+    traffic_light T_NORTH(clk, reset, N_start_cmd, light_north);
+    traffic_light T_EAST(clk, reset, E_start_cmd,  light_east);
+    traffic_light T_SOUTH(clk, reset, S_start_cmd, light_south);
+    traffic_light T_WEST(clk, reset, W_start_cmd, light_west);
     // The left traffic lights have the additional flash input, telling them to start flashing yellow
-    left_traffic_light L_NORTH(clk, reset, NL_start_cmd, NL_flash, N_left);
-    left_traffic_light L_EAST(clk, reset, NL_start_cmd, EL_flash, N_left);
-    left_traffic_light L_SOUTH(clk, reset, NL_start_cmd, SL_flash, N_left);
-    left_traffic_light L_WEST(clk, reset, NL_start_cmd, WL_flash, N_left);
+    left_traffic_light L_NORTH(clk, reset, NL_start_cmd, NL_flash, left_north);
+    left_traffic_light L_EAST(clk, reset, NL_start_cmd, EL_flash, left_south);
+    left_traffic_light L_SOUTH(clk, reset, NL_start_cmd, SL_flash, left_east);
+    left_traffic_light L_WEST(clk, reset, NL_start_cmd, WL_flash, left_west);
     // How many states are there? 
     // BOTH_GREEN means that both sides of the road has through-traffic and both opposite lefts are flashing yellow
     // DOUBLE_GREEN means that you can go forward and left
@@ -40,21 +46,14 @@ module four_way_traffic_stop(
 
     state_t current_state, next_state; 
 
-    // The time from the moment it turns green to the moment it will turn green again is 11 cycles
-    parameter integer FULL_TIME = 11;
-
-    // counter to hold the time
-    integer counter;
+    
 
     always_ff @(posedge clk or posedge reset) begin 
         if (reset) begin
             current_state <= NS_BOTH_GREEN;
-            counter <= FULL_TIME;
         end else begin
             current_state <= next_state;
-            // decrement the counter so long as it is above 0
-            if (counter > 0)
-                counter <= counter -1;
+            
         end
     end
 
@@ -231,6 +230,9 @@ end
             if (current_state != next_state) begin
                 counter <= FULL_TIME;
             end
+            // decrement the counter so long as it is above 0
+            if (counter > 0)
+                counter <= counter -1;
         end
     end
 
